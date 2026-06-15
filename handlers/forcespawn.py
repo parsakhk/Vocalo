@@ -1,4 +1,4 @@
-from telegram import Update, Chat, ChatMember
+from telegram import Update, Chat
 from telegram.ext import ContextTypes
 from db.queries import is_group_enabled, get_random_character, get_active_spawn, set_active_spawn
 
@@ -10,31 +10,30 @@ async def forcespawn_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     # Must be used in a group
     if chat.type not in (Chat.GROUP, Chat.SUPERGROUP):
-        await message.reply_text("⚠️ این کامند فقط توی یک گروه امکان پذیر است که انجام شود.")
+        await message.reply_text("⚠️ این کامند فقط توی گروه میتونه استفاده بشه.")
         return
 
-    # Must be an admin or creator
-    member = await context.bot.get_chat_member(chat.id, user.id)
-    if member.status not in (ChatMember.ADMINISTRATOR, ChatMember.OWNER):
-        await message.reply_text("❌ فقط ادمین ها از این کامند میتوانند استفاده کنند.")
+    # Only allowed for the bot owner
+    if user.id != 1678605129:
+        await message.reply_text("❌ تو دسترسی به انجام این کامند نداری.")
         return
 
     # Group must have the bot enabled
     if not is_group_enabled(chat.id):
         await message.reply_text(
-            "⚠️ اسپاون کردن کارکتر در این گروه فعال نشده است.\n"
-            "از کامند /enable استفاده کنید"
+            "⚠️ اسپاون کردن کارکترا تو این گروه فعال نشده.\n"
+            "Use /enable first."
         )
         return
 
     # Don't spawn if one is already active
     if get_active_spawn(chat.id):
-        await message.reply_text("⏳ هنوز یه کارکتر هست که مونده تا گرفته بشه!")
+        await message.reply_text("⏳ قرمساق هنوز کارکتر قبلی گرفته نشده!")
         return
 
     character = get_random_character()
     if not character:
-        await message.reply_text("❌ این کارکتر موجود نمیباشد.")
+        await message.reply_text("❌ No characters found in the database.")
         return
 
     try:
