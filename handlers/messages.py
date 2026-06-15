@@ -18,6 +18,8 @@ from utils.rate_checker import record_message
 
 logger = logging.getLogger(__name__)
 
+SPAWN_COOLDOWN = 120  # seconds
+
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat    = update.effective_chat
@@ -43,16 +45,20 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 # ── Spawn ─────────────────────────────────────────────────────────────────────
 
-async def _spawn_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _spawn_character(update: Update, context: ContextTypes.DEFAULT_TYPE, force: bool = False) -> bool:
+    """
+    Spawns a character in the chat.
+    Returns True if a spawn was successfully created, False otherwise.
+    """
     chat = update.effective_chat
 
     if get_active_spawn(chat.id):
-        return
+        return False
 
     character = get_random_character()
     if not character:
         logger.warning("No characters in the database to spawn.")
-        return
+        return False
 
     try:
         sent = await context.bot.send_photo(
@@ -68,12 +74,46 @@ async def _spawn_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
     except Exception as e:
         logger.error("Failed to send spawn photo: %s", e)
-        return
+        return False
 
     set_active_spawn(
         group_id=chat.id,
         character_id=character["id"],
         message_id=sent.message_id,
+    )
+
+    # Schedule the "escaped" message after 2 minutes
+    context.job_queue.run_once(
+        _spawn_expired,
+        when=SPAWN_COOLDOWN,
+        data={
+            "chat_id":    chat.id,
+            "message_id": sent.message_id,
+        },
+        name=f"spawn_expire_{chat.id}",
+    )
+
+    return True
+
+
+async def _spawn_expired(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Called by job queue after cooldown — clears spawn and sends escaped message."""
+    data       = context.job.data
+    chat_id    = data["chat_id"]
+    message_id = data["message_id"]
+
+    spawn = get_active_spawn(chat_id)
+
+    # If spawn was already caught, do nothing
+    if not spawn or spawn["message_id"] != message_id:
+        return
+
+    clear_active_spawn(chat_id)
+
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text="ای بابا اینم که در رفت 😮‍💨",
+        reply_to_message_id=message_id,
     )
 
 
@@ -117,7 +157,11 @@ async def _try_catch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         )
         return
 
-    # Correct guess!
+    # Correct guess — cancel the expiry job first
+    current_jobs = context.job_queue.get_jobs_by_name(f"spawn_expire_{chat.id}")
+    for job in current_jobs:
+        job.schedule_removal()
+
     final_price, rarity = add_to_inventory(
         telegram_id=user.id,
         character_id=character["id"],
