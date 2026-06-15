@@ -8,7 +8,6 @@ from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     MessageHandler,
-    TypeHandler,
     filters,
 )
 
@@ -17,6 +16,8 @@ from handlers.enable     import enable_handler
 from handlers.messages   import message_handler
 from handlers.inventory  import inventory_handler
 from handlers.forcespawn import forcespawn_handler
+from handlers.profile    import profile_handler
+from handlers.signin     import signin_handler
 
 load_dotenv()
 
@@ -57,6 +58,8 @@ def main() -> None:
     app.add_handler(CommandHandler("enable",     enable_handler))
     app.add_handler(CommandHandler("inventory",  inventory_handler))
     app.add_handler(CommandHandler("forcespawn", forcespawn_handler))
+    app.add_handler(CommandHandler("profile",    profile_handler))
+    app.add_handler(CommandHandler("signin",     signin_handler))
 
     # ── All group messages (for rate tracking + catch replies) ────────────────
     app.add_handler(
