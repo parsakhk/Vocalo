@@ -43,7 +43,7 @@ async def enable_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     await update.message.reply_text(
         "🎉 *Vocalo is now enabled in this group!*\n\n"
-        "⏰ A character will appear every *30 minutes*!\n"
+        "⏰ A character will appear every *15 minutes*!\n"
         "Reply with their name to catch them! 🎴",
         parse_mode="Markdown",
     )
