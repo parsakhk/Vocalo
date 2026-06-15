@@ -141,14 +141,24 @@ def clear_active_spawn(group_id: int) -> None:
 
 # ── Inventory ─────────────────────────────────────────────────────────────────
 
-def add_to_inventory(telegram_id: int, character_id: int, base_price: int) -> tuple[int, str]:
+def add_to_inventory(telegram_id: int, character_id: int, base_price: int, char_data: dict = None) -> tuple[int, str]:
     """
-    Adds the character to inventory with a random rarity and price multiplier.
+    Adds the character to inventory with random rarity, price multiplier,
+    and randomized attack/defense within the character's ranges.
     Returns (final_price, rarity).
     """
     rarity       = roll_rarity()
     multiplier   = round(random.uniform(1.0, 1.5), 2)
     caught_price = int(base_price * multiplier)
+
+    # Roll attack and defense from character's ranges
+    atk_min = char_data.get("atk_min", 50)  if char_data else 50
+    atk_max = char_data.get("atk_max", 150) if char_data else 150
+    def_min = char_data.get("def_min", 30)  if char_data else 30
+    def_max = char_data.get("def_max", 100) if char_data else 100
+
+    attack  = random.randint(atk_min, atk_max)
+    defense = random.randint(def_min, def_max)
 
     db = get_db()
     db.table("inventory").insert({
@@ -156,6 +166,8 @@ def add_to_inventory(telegram_id: int, character_id: int, base_price: int) -> tu
         "character_id": character_id,
         "caught_price": caught_price,
         "rarity":       rarity,
+        "attack":       attack,
+        "defense":      defense,
     }).execute()
 
     return caught_price, rarity
@@ -213,6 +225,9 @@ def format_inventory(items: list[dict], user_name: str) -> str:
             counter += 1
 
     return "\n".join(lines)
+
+
+# ── Profile ───────────────────────────────────────────────────────────────────
 
 def get_profile_stats(telegram_id: int) -> dict:
     """Returns all stats needed for the profile command."""
