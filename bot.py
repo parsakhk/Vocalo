@@ -21,6 +21,7 @@ from handlers.forcespawn import forcespawn_handler
 from handlers.profile    import profile_handler
 from handlers.signin     import signin_handler
 from handlers.sell       import sell_handler, sell_callback
+from handlers.trade      import trade_handler, trade_callback, trade_vp_input
 
 load_dotenv()
 
@@ -65,7 +66,13 @@ def main() -> None:
     app.add_handler(CommandHandler("profile",    profile_handler))
     app.add_handler(CommandHandler("signin",     signin_handler))
     app.add_handler(CommandHandler("sell",       sell_handler))
-    app.add_handler(CallbackQueryHandler(sell_callback, pattern="^sell_"))
+    app.add_handler(CommandHandler("trade",      trade_handler))
+    app.add_handler(CallbackQueryHandler(sell_callback,  pattern="^sell_"))
+    app.add_handler(CallbackQueryHandler(trade_callback, pattern="^trade_"))
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & filters.ChatType.PRIVATE,
+        trade_vp_input,
+    ))
 
     # ── All group messages (for rate tracking + catch replies) ────────────────
     app.add_handler(
