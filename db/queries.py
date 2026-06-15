@@ -213,3 +213,45 @@ def format_inventory(items: list[dict], user_name: str) -> str:
             counter += 1
 
     return "\n".join(lines)
+
+def get_profile_stats(telegram_id: int) -> dict:
+    """Returns all stats needed for the profile command."""
+    db = get_db()
+
+    items = get_inventory(telegram_id)
+
+    # Rarity counts
+    rarity_counts = {"Legendary": 0, "Mythic": 0, "Rare": 0, "Common": 0}
+    portfolio_value = 0
+    anime_counter: dict[str, int] = defaultdict(int)
+
+    rarest_char  = None
+    rarest_order = {r: i for i, r in enumerate(RARITY_ORDER)}  # lower = rarer
+    rarest_rank  = 999
+
+    for item in items:
+        rarity = item.get("rarity", "Common")
+        price  = item.get("caught_price", 0)
+        char   = item.get("characters") or {}
+        anime  = char.get("anime", "?")
+        name   = char.get("name", "Unknown")
+
+        rarity_counts[rarity] = rarity_counts.get(rarity, 0) + 1
+        portfolio_value += price
+        anime_counter[anime] += 1
+
+        rank = rarest_order.get(rarity, 999)
+        if rank < rarest_rank:
+            rarest_rank  = rank
+            rarest_char  = {"name": name, "rarity": rarity}
+
+    favorite_anime = max(anime_counter, key=anime_counter.get) if anime_counter else None
+    total          = len(items)
+
+    return {
+        "total":          total,
+        "rarity_counts":  rarity_counts,
+        "portfolio_value": portfolio_value,
+        "rarest_char":    rarest_char,
+        "favorite_anime": favorite_anime,
+    }
