@@ -13,6 +13,7 @@ from telegram.ext import (
 
 from handlers.start      import start_handler
 from handlers.enable     import enable_handler
+from handlers.disable    import disable_handler
 from handlers.messages   import message_handler
 from handlers.inventory  import inventory_handler
 from handlers.forcespawn import forcespawn_handler
@@ -56,6 +57,7 @@ def main() -> None:
     # ── Commands ──────────────────────────────────────────────────────────────
     app.add_handler(CommandHandler("start",      start_handler))
     app.add_handler(CommandHandler("enable",     enable_handler))
+    app.add_handler(CommandHandler("disable",    disable_handler))
     app.add_handler(CommandHandler("inventory",  inventory_handler))
     app.add_handler(CommandHandler("forcespawn", forcespawn_handler))
     app.add_handler(CommandHandler("profile",    profile_handler))
