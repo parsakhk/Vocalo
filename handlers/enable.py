@@ -2,7 +2,7 @@ from telegram import Update, Chat
 from telegram.ext import ContextTypes
 from db.queries import enable_group, is_group_enabled, get_or_create_user
 
-SPAWN_INTERVAL = 1800  # 30 minutes in seconds
+SPAWN_INTERVAL = 900  # 30 minutes in seconds
 
 
 async def enable_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
