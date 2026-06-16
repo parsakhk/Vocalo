@@ -14,7 +14,7 @@ def _get_full_inventory(telegram_id: int) -> list[dict]:
     db = get_db()
     res = (
         db.table("inventory")
-        .select("id, caught_price, rarity, attack, defense, character_id, characters(name, anime, image_url, ability_name, ability_desc)")
+        .select("id, caught_price, rarity, attack, defense, characters(name, anime, image_url, ability_name, ability_desc)")
         .eq("telegram_id", telegram_id)
         .order("caught_price", desc=True)
         .execute()
@@ -39,7 +39,7 @@ def _list_keyboard(items: list[dict], page: int) -> InlineKeyboardMarkup:
 
     nav = []
     if total_pages > 1:
-        nav.append(InlineKeyboardButton("⏮", callback_data=f"info_list:0"))
+        nav.append(InlineKeyboardButton("⏮", callback_data="info_list:0"))
         if page > 0:
             nav.append(InlineKeyboardButton("◀️", callback_data=f"info_list:{page-1}"))
         nav.append(InlineKeyboardButton(f"{page+1}/{total_pages}", callback_data="info_noop"))
@@ -53,11 +53,11 @@ def _list_keyboard(items: list[dict], page: int) -> InlineKeyboardMarkup:
 
 def _detail_keyboard(page: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton("◀️ Back to list", callback_data=f"info_list:{page}"),
+        InlineKeyboardButton("◀️ Back to list", callback_data=f"info_back:{page}"),
     ]])
 
 
-def _detail_text(item: dict) -> str:
+def _detail_caption(item: dict) -> str:
     char         = item.get("characters") or {}
     name         = char.get("name", "?")
     anime        = char.get("anime", "?")
@@ -95,11 +95,10 @@ async def info_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
         return
 
-    keyboard = _list_keyboard(items, 0)
     await update.message.reply_text(
-        f"📋 *Your characters* — tap one for details:",
+        "📋 *Your characters* — tap one for details:",
         parse_mode="Markdown",
-        reply_markup=keyboard,
+        reply_markup=_list_keyboard(items, 0),
     )
 
 
@@ -117,16 +116,34 @@ async def info_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     items = _get_full_inventory(user.id)
 
-    # ── Back to list ──────────────────────────────────────────────────────────
+    # ── Page navigation ───────────────────────────────────────────────────────
     if data.startswith("info_list:"):
-        page     = int(data.split(":")[1])
-        page     = max(0, min(page, max(0, math.ceil(len(items) / ITEMS_PER_PAGE) - 1)))
-        keyboard = _list_keyboard(items, page)
+        page        = int(data.split(":")[1])
+        total_pages = max(1, math.ceil(len(items) / ITEMS_PER_PAGE))
+        page        = max(0, min(page, total_pages - 1))
 
         await query.edit_message_text(
             "📋 *Your characters* — tap one for details:",
             parse_mode="Markdown",
-            reply_markup=keyboard,
+            reply_markup=_list_keyboard(items, page),
+        )
+        return
+
+    # ── Back from detail — delete photo and restore list ─────────────────────
+    if data.startswith("info_back:"):
+        page        = int(data.split(":")[1])
+        total_pages = max(1, math.ceil(len(items) / ITEMS_PER_PAGE))
+        page        = max(0, min(page, total_pages - 1))
+
+        # Delete the photo message
+        await query.message.delete()
+
+        # Send a fresh list message
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text="📋 *Your characters* — tap one for details:",
+            parse_mode="Markdown",
+            reply_markup=_list_keyboard(items, page),
         )
         return
 
@@ -143,22 +160,24 @@ async def info_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         char      = item.get("characters") or {}
         image_url = char.get("image_url", "")
-        text      = _detail_text(item)
+        caption   = _detail_caption(item)
         keyboard  = _detail_keyboard(page)
 
+        # Delete the list message, send photo detail
+        await query.message.delete()
+
         if image_url:
-            # Send new photo message and delete the list message
-            await query.message.delete()
             await context.bot.send_photo(
                 chat_id=query.message.chat_id,
                 photo=image_url,
-                caption=text,
+                caption=caption,
                 parse_mode="Markdown",
                 reply_markup=keyboard,
             )
         else:
-            await query.edit_message_text(
-                text,
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=caption,
                 parse_mode="Markdown",
                 reply_markup=keyboard,
             )
