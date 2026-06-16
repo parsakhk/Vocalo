@@ -24,6 +24,7 @@ from handlers.sell       import sell_handler, sell_callback
 from handlers.trade      import trade_handler, trade_callback, trade_vp_input
 from handlers.info       import info_handler, info_callback
 from handlers.reforge    import reforge_handler, reforge_callback
+from handlers.bet        import bet_handler
 
 load_dotenv()
 
@@ -71,6 +72,7 @@ def main() -> None:
     app.add_handler(CommandHandler("trade",      trade_handler))
     app.add_handler(CommandHandler("info",       info_handler))
     app.add_handler(CommandHandler("reforge",    reforge_handler))
+    app.add_handler(CommandHandler("bet",        bet_handler))
     app.add_handler(CallbackQueryHandler(sell_callback,    pattern="^sell_"))
     app.add_handler(CallbackQueryHandler(trade_callback,   pattern="^trade_"))
     app.add_handler(CallbackQueryHandler(info_callback,    pattern="^info_"))
