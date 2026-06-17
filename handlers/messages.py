@@ -79,6 +79,7 @@ async def _try_catch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         telegram_id=user.id,
         character_id=character["id"],
         base_price=character["base_price"],
+        char_data=character,
     )
 
     from db.queries import clear_active_spawn
