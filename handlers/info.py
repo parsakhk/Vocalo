@@ -8,13 +8,19 @@ from db.queries import get_or_create_user, rarity_emoji
 from db.client import get_db
 
 ITEMS_PER_PAGE = 5
+CLASS_EMOJI = {
+    "Attacker":       "⚔️",
+    "Defender":       "🛡",
+    "Boost Attacker": "🔥",
+    "Boost Defender": "💚",
+}
 
 
 def _get_full_inventory(telegram_id: int) -> list[dict]:
     db = get_db()
     res = (
         db.table("inventory")
-        .select("id, caught_price, rarity, attack, defense, characters(name, anime, image_url, ability_name, ability_desc)")
+        .select("id, caught_price, rarity, attack, defense, characters(name, anime, image_url, ability_name, ability_desc, class)")
         .eq("telegram_id", telegram_id)
         .order("caught_price", desc=True)
         .execute()
@@ -68,11 +74,14 @@ def _detail_caption(item: dict) -> str:
     price        = item.get("caught_price", 0)
     ability_name = char.get("ability_name", "") or "—"
     ability_desc = char.get("ability_desc", "") or "—"
+    cls          = char.get("class", "") or "—"
+    cls_emoji    = CLASS_EMOJI.get(cls, "❓")
 
     return (
         f"{emoji} *{name}*\n"
         f"🎌 Anime: *{anime}*\n"
-        f"🏅 Rarity: *{rarity}*\n\n"
+        f"🏅 Rarity: *{rarity}*\n"
+        f"{cls_emoji} Class: *{cls}*\n\n"
         f"⚔️ Attack:  *{attack}*\n"
         f"🛡 Defense: *{defense}*\n"
         f"💰 Value:   *{price:,} VP*\n\n"

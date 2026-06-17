@@ -25,6 +25,7 @@ from handlers.trade      import trade_handler, trade_callback, trade_vp_input
 from handlers.info       import info_handler, info_callback
 from handlers.reforge    import reforge_handler, reforge_callback
 from handlers.bet        import bet_handler
+from handlers.pvp        import pvp_handler, pvp_callback
 
 load_dotenv()
 
@@ -73,10 +74,12 @@ def main() -> None:
     app.add_handler(CommandHandler("info",       info_handler))
     app.add_handler(CommandHandler("reforge",    reforge_handler))
     app.add_handler(CommandHandler("bet",        bet_handler))
+    app.add_handler(CommandHandler("pvp",        pvp_handler))
     app.add_handler(CallbackQueryHandler(sell_callback,    pattern="^sell_"))
     app.add_handler(CallbackQueryHandler(trade_callback,   pattern="^trade_"))
     app.add_handler(CallbackQueryHandler(info_callback,    pattern="^info_"))
     app.add_handler(CallbackQueryHandler(reforge_callback, pattern="^reforge_"))
+    app.add_handler(CallbackQueryHandler(pvp_callback,     pattern="^pvp_"))
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.ChatType.PRIVATE,
         trade_vp_input,
