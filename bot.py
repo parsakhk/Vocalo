@@ -16,7 +16,7 @@ from handlers.start      import start_handler
 from handlers.enable     import enable_handler
 from handlers.disable    import disable_handler
 from handlers.messages   import message_handler
-from handlers.inventory  import inventory_handler
+from handlers.inventory  import inventory_handler, inventory_callback
 from handlers.forcespawn import forcespawn_handler
 from handlers.profile    import profile_handler
 from handlers.signin     import signin_handler
@@ -81,13 +81,14 @@ def main() -> None:
     app.add_handler(CommandHandler("admin",      admin_handler))
     app.add_handler(CommandHandler("getvocalos", getvocalos_handler))
     app.add_handler(CommandHandler("cod",        cod_handler))
-    app.add_handler(CallbackQueryHandler(cod_callback, pattern="^cod_buy:"))
-    app.add_handler(CallbackQueryHandler(sell_callback,    pattern="^sell_"))
-    app.add_handler(CallbackQueryHandler(trade_callback,   pattern="^trade_"))
-    app.add_handler(CallbackQueryHandler(info_callback,    pattern="^info_"))
-    app.add_handler(CallbackQueryHandler(reforge_callback, pattern="^reforge_"))
-    app.add_handler(CallbackQueryHandler(pvp_callback,     pattern="^pvp_"))
-    app.add_handler(CallbackQueryHandler(admin_callback,   pattern="^adm_"))
+    app.add_handler(CallbackQueryHandler(cod_callback,       pattern="^cod_buy:"))
+    app.add_handler(CallbackQueryHandler(sell_callback,      pattern="^sell_"))
+    app.add_handler(CallbackQueryHandler(trade_callback,     pattern="^trade_"))
+    app.add_handler(CallbackQueryHandler(info_callback,      pattern="^info_"))
+    app.add_handler(CallbackQueryHandler(reforge_callback,   pattern="^reforge_"))
+    app.add_handler(CallbackQueryHandler(pvp_callback,       pattern="^pvp_"))
+    app.add_handler(CallbackQueryHandler(admin_callback,     pattern="^adm_"))
+    app.add_handler(CallbackQueryHandler(inventory_callback, pattern="^inv_"))
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.ChatType.PRIVATE,
         trade_vp_input,
