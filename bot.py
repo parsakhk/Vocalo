@@ -29,6 +29,7 @@ from handlers.pvp        import pvp_handler, pvp_callback
 from handlers.admin      import admin_handler, admin_callback
 from handlers.daily      import getvocalos_handler
 from handlers.cod        import cod_handler, cod_callback
+from handlers.transfer   import transfer_handler, transfer_reply_handler
 
 load_dotenv()
 
@@ -81,6 +82,11 @@ def main() -> None:
     app.add_handler(CommandHandler("admin",      admin_handler))
     app.add_handler(CommandHandler("getvocalos", getvocalos_handler))
     app.add_handler(CommandHandler("cod",        cod_handler))
+    app.add_handler(CommandHandler("transfer",   transfer_handler))
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & filters.REPLY,
+        transfer_reply_handler,
+    ))
     app.add_handler(CallbackQueryHandler(cod_callback,       pattern="^cod_buy:"))
     app.add_handler(CallbackQueryHandler(sell_callback,      pattern="^sell_"))
     app.add_handler(CallbackQueryHandler(trade_callback,     pattern="^trade_"))
