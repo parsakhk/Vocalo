@@ -84,7 +84,7 @@ def main() -> None:
     app.add_handler(CommandHandler("cod",        cod_handler))
     app.add_handler(CommandHandler("transfer",   transfer_handler))
     app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.REPLY,
+        filters.TEXT & ~filters.COMMAND & filters.REPLY & filters.ChatType.PRIVATE,
         transfer_reply_handler,
     ))
     app.add_handler(CallbackQueryHandler(cod_callback,       pattern="^cod_buy:"))
@@ -100,10 +100,11 @@ def main() -> None:
         trade_vp_input,
     ))
 
-    # ── All group messages (for rate tracking + catch replies) ────────────────
-    app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler)
-    )
+    # ── Group messages — must be last so it catches all group text including replies ──
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP),
+        message_handler,
+    ))
 
     logger.info("Bot is running...")
     app.run_polling(
